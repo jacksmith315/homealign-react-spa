@@ -3,7 +3,7 @@ import { useAuth } from './AuthProvider';
 
 const LoginForm = () => {
   const { login } = useAuth();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -13,7 +13,7 @@ const LoginForm = () => {
     setLoading(true);
     setError('');
     
-    const success = await login(username, password);
+    const success = await login(email, password);
     if (!success) {
       setError('Invalid credentials');
     }
@@ -38,9 +38,9 @@ const LoginForm = () => {
                 type="text"
                 required
                 className="relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                placeholder="Username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                placeholder="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div>

@@ -22,7 +22,7 @@ A modern React Single Page Application for managing Django homeAlign Core API re
 ### 1. Clone and Install
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/jacksmith315/homealign-react-spa.git
 cd homealign-react-spa
 npm install
 ```
