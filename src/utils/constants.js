@@ -25,7 +25,7 @@ export const STATUS_OPTIONS = [
 ];
 
 export const MENU_ITEMS = [
-  { id: 'patients', label: 'Patients', icon: 'Users' },
+  { id: 'patients', label: 'Members', icon: 'Users' },
   { id: 'clients', label: 'Clients', icon: 'Building' },
   { id: 'providers', label: 'Providers', icon: 'UserCheck' },
   { id: 'referrals', label: 'Referrals', icon: 'FileText' },

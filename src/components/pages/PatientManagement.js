@@ -90,7 +90,7 @@ const PatientManagement = () => {
       const itemsPerPage = 10; // This should match your API's page size
       setTotalPages(Math.ceil((data.count || 0) / itemsPerPage));
     } catch (err) {
-      setError('Failed to fetch patients: ' + err.message);
+      setError('Failed to fetch members: ' + err.message);
     } finally {
       setLoading(false);
     }
@@ -211,7 +211,7 @@ const PatientManagement = () => {
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
           <h3 className="text-lg font-semibold mb-4">
-            {patient ? 'Edit Patient' : 'Create Patient'}
+            {patient ? 'Edit Member' : 'Create Member'}
           </h3>
           
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -405,7 +405,7 @@ const PatientManagement = () => {
                       onChange={(e) => setFormData({...formData, active: e.target.checked})}
                       className="rounded border-gray-300 mr-2"
                     />
-                    Active Patient
+                    Active Member
                   </label>
                   
                   <label className="flex items-center">
@@ -507,8 +507,8 @@ const PatientManagement = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Patient Management</h2>
-          <p className="text-gray-600">Manage patient records and medical information</p>
+          <h2 className="text-2xl font-bold text-gray-900">Member Management</h2>
+          <p className="text-gray-600">Manage member records</p>
           {totalCount > 0 && (
             <p className="text-sm text-gray-500 mt-1">
               Total: {totalCount} patients
@@ -520,7 +520,7 @@ const PatientManagement = () => {
           className="btn-primary flex items-center"
         >
           <Plus size={20} className="mr-2" />
-          Add Patient
+          Add Member
         </button>
       </div>
 
@@ -535,7 +535,7 @@ const PatientManagement = () => {
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Search Patients
+              Search Members
             </label>
             <div className="relative">
               <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -590,7 +590,7 @@ const PatientManagement = () => {
                   />
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Patient
+                  Member
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Contact
@@ -730,7 +730,7 @@ const PatientManagement = () => {
               ) : (
                 <tr>
                   <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                    No patients found
+                    No members found
                   </td>
                 </tr>
               )}
