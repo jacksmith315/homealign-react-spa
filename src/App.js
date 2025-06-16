@@ -9,7 +9,7 @@ import ReferralManagement from './components/pages/ReferralManagement';
 import ServiceManagement from './components/pages/ServiceManagement';
 import './index.css';
 
-// Placeholder components for different views
+// eslint-disable-next-line no-unused-vars
 const PlaceholderView = ({ title, description }) => (
   <div className="p-6">
     <div className="text-center py-12">

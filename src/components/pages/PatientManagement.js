@@ -1,17 +1,25 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import ApiService from '../../services/ApiService';
 import BulkActionToolbar from '../common/BulkActionToolbar';
 import AdvancedFilters from '../common/AdvancedFilters';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { formatDate, formatPhoneNumber, getStatusBadgeClass, downloadFile } from '../../utils/helpers';
+import { formatDate, formatPhoneNumber, downloadFile } from '../../utils/helpers';
 import { 
-  Search, Plus, Edit2, Trash2, RotateCcw, Mail, Phone, MapPin, Calendar, User
+    Plus, 
+    Search, 
+    RotateCcw, 
+    Mail, 
+    Phone, 
+    Edit2, 
+    Trash2,
+    User,
+    Calendar
 } from 'lucide-react';
 
 const PatientManagement = () => {
   const auth = useAuth();
-  const apiService = new ApiService(auth);
+  const apiService = useMemo(() => new ApiService(auth), [auth]);
   
   const [patients, setPatients] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -73,7 +81,7 @@ const PatientManagement = () => {
 
   useEffect(() => {
     fetchPatients(currentPage, searchTerm, filters);
-  }, [currentPage, auth.selectedDb, fetchPatients]);
+  }, [currentPage, auth.selectedDb, fetchPatients, searchTerm, filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();

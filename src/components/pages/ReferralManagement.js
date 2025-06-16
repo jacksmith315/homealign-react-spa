@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import ApiService from '../../services/ApiService';
 import BulkActionToolbar from '../common/BulkActionToolbar';
 import AdvancedFilters from '../common/AdvancedFilters';
 import LoadingSpinner from '../common/LoadingSpinner';
+import { Plus, Search, RotateCcw, Mail, Phone, Edit2, Trash2 } from 'lucide-react';
 import { formatDate, formatPhoneNumber, getStatusBadgeClass, downloadFile } from '../../utils/helpers';
 import { 
-  Search, Plus, Edit2, Trash2, RotateCcw, User, FileText, Clock, 
   CheckCircle, AlertCircle, Calendar, ArrowRight
 } from 'lucide-react';
 
 const ReferralManagement = () => {
   const auth = useAuth();
-  const apiService = new ApiService(auth);
+  const apiService = useMemo(() => new ApiService(auth), [auth]);
   
   const [referrals, setReferrals] = useState([]);
   const [referralTypes, setReferralTypes] = useState([]);
@@ -100,7 +100,7 @@ const ReferralManagement = () => {
 
   useEffect(() => {
     fetchReferrals(currentPage, searchTerm, filters);
-  }, [currentPage, auth.selectedDb, fetchReferrals]);
+  }, [currentPage, auth.selectedDb, fetchReferrals, searchTerm, filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();

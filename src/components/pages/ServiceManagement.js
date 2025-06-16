@@ -1,18 +1,39 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import ApiService from '../../services/ApiService';
 import BulkActionToolbar from '../common/BulkActionToolbar';
 import AdvancedFilters from '../common/AdvancedFilters';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { formatDate, getStatusBadgeClass, downloadFile } from '../../utils/helpers';
 import { 
-  Search, Plus, Edit2, Trash2, RotateCcw, Settings, DollarSign,
-  Clock, CheckCircle, AlertCircle, Tag, Users, Star
+    Plus, 
+    Search, 
+    RotateCcw, 
+    Mail, 
+    Phone, 
+    Edit2, 
+    Trash2,
+    Settings,
+    Star,
+    CheckCircle,
+    AlertCircle,
+    Users,
+    Clock,
+    DollarSign
 } from 'lucide-react';
+import { getStatusBadgeClass } from '../../utils/helpers';
+
+const downloadFile = (blob, filename) => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    window.URL.revokeObjectURL(url);
+};
 
 const ServiceManagement = () => {
   const auth = useAuth();
-  const apiService = new ApiService(auth);
+  const apiService = useMemo(() => new ApiService(auth), [auth]);
   
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -104,7 +125,7 @@ const ServiceManagement = () => {
 
   useEffect(() => {
     fetchServices(currentPage, searchTerm, filters);
-  }, [currentPage, auth.selectedDb, fetchServices]);
+  }, [currentPage, auth.selectedDb, fetchServices, searchTerm, filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();

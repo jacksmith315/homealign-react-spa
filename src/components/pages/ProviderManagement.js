@@ -1,18 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import ApiService from '../../services/ApiService';
 import BulkActionToolbar from '../common/BulkActionToolbar';
 import AdvancedFilters from '../common/AdvancedFilters';
 import LoadingSpinner from '../common/LoadingSpinner';
-import { formatDate, formatPhoneNumber, getStatusBadgeClass, downloadFile } from '../../utils/helpers';
-import { 
-  Search, Plus, Edit2, Trash2, RotateCcw, Mail, Phone, MapPin, Award, 
-  Building, Users, Stethoscope
-} from 'lucide-react';
+import { Plus, Search, RotateCcw, Mail, Phone, Edit2, Trash2 } from 'lucide-react';
 
 const ProviderManagement = () => {
   const auth = useAuth();
-  const apiService = new ApiService(auth);
+  const apiService = useMemo(() => new ApiService(auth), [auth]);
   
   const [providers, setProviders] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -91,7 +87,7 @@ const ProviderManagement = () => {
 
   useEffect(() => {
     fetchProviders(currentPage, searchTerm, filters);
-  }, [currentPage, auth.selectedDb, fetchProviders]);
+  }, [currentPage, auth.selectedDb, fetchProviders, searchTerm, filters]);
 
   const handleSearch = (e) => {
     e.preventDefault();
