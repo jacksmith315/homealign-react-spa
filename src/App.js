@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './components/auth/AuthProvider';
 import LoginForm from './components/auth/LoginForm';
 import Navigation from './components/layout/Navigation';
+import PatientManagement from './components/pages/PatientManagement';
 import ClientManagement from './components/pages/ClientManagement';
+import ProviderManagement from './components/pages/ProviderManagement';
+import ReferralManagement from './components/pages/ReferralManagement';
+import ServiceManagement from './components/pages/ServiceManagement';
 import './index.css';
 
 // Placeholder components for different views
@@ -31,17 +35,17 @@ const AppContent = () => {
   const renderCurrentView = () => {
     switch (currentView) {
       case 'patients':
-        return <PlaceholderView title="Patient Management" description="Manage patient records and information" />;
+        return <PatientManagement />;
       case 'clients':
         return <ClientManagement />;
       case 'providers':
-        return <PlaceholderView title="Provider Management" description="Manage healthcare providers and networks" />;
+        return <ProviderManagement />;
       case 'referrals':
-        return <PlaceholderView title="Referral Management" description="Manage patient referrals and tracking" />;
+        return <ReferralManagement />;
       case 'services':
-        return <PlaceholderView title="Service Management" description="Manage healthcare services and programs" />;
+        return <ServiceManagement />;
       default:
-        return <PlaceholderView title="Dashboard" description="Welcome to homeAlign Admin Portal" />;
+        return <PatientManagement />;
     }
   };
 
