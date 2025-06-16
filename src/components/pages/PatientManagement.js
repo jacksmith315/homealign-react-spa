@@ -27,6 +27,9 @@ const PatientManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextPage, setNextPage] = useState(null);
+  const [previousPage, setPreviousPage] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPatient, setEditingPatient] = useState(null);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -38,22 +41,28 @@ const PatientManagement = () => {
       label: 'Gender',
       type: 'select',
       options: [
-        { value: 'M', label: 'Male' },
-        { value: 'F', label: 'Female' },
-        { value: 'O', label: 'Other' },
+        { value: 'm', label: 'Male' },
+        { value: 'f', label: 'Female' },
+        { value: 's', label: 'Other' },
       ]
     },
     {
-      key: 'age_min',
-      label: 'Minimum Age',
-      type: 'number',
-      placeholder: 'Min age'
+      key: 'active',
+      label: 'Status',
+      type: 'select',
+      options: [
+        { value: 'true', label: 'Active' },
+        { value: 'false', label: 'Inactive' },
+      ]
     },
     {
-      key: 'age_max',
-      label: 'Maximum Age',
-      type: 'number',
-      placeholder: 'Max age'
+      key: 'caregiver',
+      label: 'Caregiver',
+      type: 'select',
+      options: [
+        { value: 'true', label: 'Yes' },
+        { value: 'false', label: 'No' },
+      ]
     },
     {
       key: 'created_after',
@@ -70,8 +79,16 @@ const PatientManagement = () => {
     try {
       const params = { page, search, ...filterParams };
       const data = await apiService.getPatients(params);
+      
+      // Handle paginated response structure
       setPatients(data.results || []);
-      setTotalPages(Math.ceil(data.count / 10));
+      setTotalCount(data.count || 0);
+      setNextPage(data.next);
+      setPreviousPage(data.previous);
+      
+      // Calculate total pages (assuming 10 items per page or derive from API)
+      const itemsPerPage = 10; // This should match your API's page size
+      setTotalPages(Math.ceil((data.count || 0) / itemsPerPage));
     } catch (err) {
       setError('Failed to fetch patients: ' + err.message);
     } finally {
@@ -120,7 +137,7 @@ const PatientManagement = () => {
     if (selectedItems.length === patients.length) {
       setSelectedItems([]);
     } else {
-      setSelectedItems(patients.map(patient => patient.id));
+      setSelectedItems(patients.map(patient => patient.pkpatientid || patient.id));
     }
   };
 
@@ -129,19 +146,31 @@ const PatientManagement = () => {
       patient || {
         firstname: '',
         lastname: '',
-        email: '',
-        phone: '',
-        dateofbirth: '',
-        gender: '',
-        address: '',
+        middlename: '',
+        accountnumber: '',
+        payorinformation: '',
+        dob: '',
+        address1: '',
+        address2: '',
         city: '',
         state: '',
-        zip_code: '',
-        emergency_contact: '',
-        emergency_phone: '',
-        medical_record_number: '',
-        insurance_id: '',
-        notes: '',
+        zipcode: '',
+        zip4: '',
+        phonenumber: '',
+        mobilenumber: '',
+        othernumber: '',
+        primaryphone: '',
+        emailaddress: '',
+        preferredcontactmethod: '',
+        gender: '',
+        active: true,
+        receivemonthlyreminderemail: false,
+        servicecategories: '',
+        additionaldata: '',
+        caregiver: false,
+        fkcounty: null,
+        fkmembereligibilityid: null,
+        fkpreferredlanguageid: null,
       }
     );
     const [saving, setSaving] = useState(false);
@@ -151,10 +180,23 @@ const PatientManagement = () => {
       setSaving(true);
       
       try {
+        // Prepare data for API
+        const submitData = {
+          ...formData,
+          // Convert string booleans to actual booleans
+          active: formData.active === 'true' || formData.active === true,
+          receivemonthlyreminderemail: formData.receivemonthlyreminderemail === 'true' || formData.receivemonthlyreminderemail === true,
+          caregiver: formData.caregiver === 'true' || formData.caregiver === true,
+          // Convert foreign key fields to numbers if they exist
+          fkcounty: formData.fkcounty ? parseInt(formData.fkcounty) : null,
+          fkmembereligibilityid: formData.fkmembereligibilityid ? parseInt(formData.fkmembereligibilityid) : null,
+          fkpreferredlanguageid: formData.fkpreferredlanguageid ? parseInt(formData.fkpreferredlanguageid) : null,
+        };
+        
         if (patient) {
-          await apiService.updateItem('patients', patient.id, formData);
+          await apiService.updateItem('patients', patient.pkpatientid || patient.id, submitData);
         } else {
-          await apiService.createItem('patients', formData);
+          await apiService.createItem('patients', submitData);
         }
         onSave();
         onClose();
@@ -167,16 +209,16 @@ const PatientManagement = () => {
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 w-full max-w-3xl mx-4 max-h-screen overflow-y-auto">
+        <div className="bg-white rounded-lg p-6 w-full max-w-4xl mx-4 max-h-screen overflow-y-auto">
           <h3 className="text-lg font-semibold mb-4">
             {patient ? 'Edit Patient' : 'Create Patient'}
           </h3>
           
-          <div className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Personal Information */}
             <div className="border-b pb-4">
               <h4 className="font-medium text-gray-900 mb-3">Personal Information</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <input
                   type="text"
                   placeholder="First Name *"
@@ -193,21 +235,28 @@ const PatientManagement = () => {
                   className="form-input"
                   required
                 />
+                <input
+                  type="text"
+                  placeholder="Middle Name"
+                  value={formData.middlename}
+                  onChange={(e) => setFormData({...formData, middlename: e.target.value})}
+                  className="form-input"
+                />
               </div>
 
               <div className="grid grid-cols-3 gap-4 mt-4">
                 <input
                   type="email"
-                  placeholder="Email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  placeholder="Email Address"
+                  value={formData.emailaddress}
+                  onChange={(e) => setFormData({...formData, emailaddress: e.target.value})}
                   className="form-input"
                 />
                 <input
-                  type="tel"
-                  placeholder="Phone"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  type="date"
+                  placeholder="Date of Birth"
+                  value={formData.dob ? formData.dob.split('T')[0] : ''}
+                  onChange={(e) => setFormData({...formData, dob: e.target.value})}
                   className="form-input"
                 />
                 <select
@@ -216,18 +265,77 @@ const PatientManagement = () => {
                   className="form-input"
                 >
                   <option value="">Select Gender</option>
-                  <option value="M">Male</option>
-                  <option value="F">Female</option>
-                  <option value="O">Other</option>
+                  <option value="m">Male</option>
+                  <option value="f">Female</option>
+                  <option value="s">Other</option>
                 </select>
               </div>
+            </div>
 
+            {/* Account Information */}
+            <div className="border-b pb-4">
+              <h4 className="font-medium text-gray-900 mb-3">Account Information</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  placeholder="Account Number"
+                  value={formData.accountnumber}
+                  onChange={(e) => setFormData({...formData, accountnumber: e.target.value})}
+                  className="form-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Payor Information"
+                  value={formData.payorinformation}
+                  onChange={(e) => setFormData({...formData, payorinformation: e.target.value})}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="border-b pb-4">
+              <h4 className="font-medium text-gray-900 mb-3">Contact Information</h4>
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="tel"
+                  placeholder="Phone Number"
+                  value={formData.phonenumber}
+                  onChange={(e) => setFormData({...formData, phonenumber: e.target.value})}
+                  className="form-input"
+                />
+                <input
+                  type="tel"
+                  placeholder="Mobile Number"
+                  value={formData.mobilenumber}
+                  onChange={(e) => setFormData({...formData, mobilenumber: e.target.value})}
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <input
+                  type="tel"
+                  placeholder="Other Number"
+                  value={formData.othernumber}
+                  onChange={(e) => setFormData({...formData, othernumber: e.target.value})}
+                  className="form-input"
+                />
+                <input
+                  type="tel"
+                  placeholder="Primary Phone"
+                  value={formData.primaryphone}
+                  onChange={(e) => setFormData({...formData, primaryphone: e.target.value})}
+                  className="form-input"
+                />
+              </div>
+              
               <div className="mt-4">
                 <input
-                  type="date"
-                  placeholder="Date of Birth"
-                  value={formData.dateofbirth}
-                  onChange={(e) => setFormData({...formData, dateofbirth: e.target.value})}
+                  type="text"
+                  placeholder="Preferred Contact Method"
+                  value={formData.preferredcontactmethod}
+                  onChange={(e) => setFormData({...formData, preferredcontactmethod: e.target.value})}
                   className="form-input w-full"
                 />
               </div>
@@ -236,15 +344,24 @@ const PatientManagement = () => {
             {/* Address Information */}
             <div className="border-b pb-4">
               <h4 className="font-medium text-gray-900 mb-3">Address Information</h4>
-              <textarea
-                placeholder="Street Address"
-                value={formData.address}
-                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                className="form-input w-full"
-                rows="2"
-              />
+              <div className="grid grid-cols-1 gap-4">
+                <input
+                  type="text"
+                  placeholder="Address Line 1"
+                  value={formData.address1}
+                  onChange={(e) => setFormData({...formData, address1: e.target.value})}
+                  className="form-input"
+                />
+                <input
+                  type="text"
+                  placeholder="Address Line 2"
+                  value={formData.address2}
+                  onChange={(e) => setFormData({...formData, address2: e.target.value})}
+                  className="form-input"
+                />
+              </div>
 
-              <div className="grid grid-cols-3 gap-4 mt-4">
+              <div className="grid grid-cols-4 gap-4 mt-4">
                 <input
                   type="text"
                   placeholder="City"
@@ -262,62 +379,103 @@ const PatientManagement = () => {
                 <input
                   type="text"
                   placeholder="ZIP Code"
-                  value={formData.zip_code}
-                  onChange={(e) => setFormData({...formData, zip_code: e.target.value})}
+                  value={formData.zipcode}
+                  onChange={(e) => setFormData({...formData, zipcode: e.target.value})}
+                  className="form-input"
+                />
+                <input
+                  type="text"
+                  placeholder="ZIP+4"
+                  value={formData.zip4}
+                  onChange={(e) => setFormData({...formData, zip4: e.target.value})}
                   className="form-input"
                 />
               </div>
             </div>
 
-            {/* Emergency Contact */}
+            {/* Settings & Preferences */}
             <div className="border-b pb-4">
-              <h4 className="font-medium text-gray-900 mb-3">Emergency Contact</h4>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  placeholder="Emergency Contact Name"
-                  value={formData.emergency_contact}
-                  onChange={(e) => setFormData({...formData, emergency_contact: e.target.value})}
-                  className="form-input"
-                />
-                <input
-                  type="tel"
-                  placeholder="Emergency Contact Phone"
-                  value={formData.emergency_phone}
-                  onChange={(e) => setFormData({...formData, emergency_phone: e.target.value})}
-                  className="form-input"
-                />
+              <h4 className="font-medium text-gray-900 mb-3">Settings & Preferences</h4>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.active}
+                      onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                      className="rounded border-gray-300 mr-2"
+                    />
+                    Active Patient
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.caregiver}
+                      onChange={(e) => setFormData({...formData, caregiver: e.target.checked})}
+                      className="rounded border-gray-300 mr-2"
+                    />
+                    Caregiver
+                  </label>
+                  
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.receivemonthlyreminderemail}
+                      onChange={(e) => setFormData({...formData, receivemonthlyreminderemail: e.target.checked})}
+                      className="rounded border-gray-300 mr-2"
+                    />
+                    Receive Monthly Reminder Email
+                  </label>
+                </div>
               </div>
             </div>
 
-            {/* Medical Information */}
+            {/* Additional Information */}
             <div className="border-b pb-4">
-              <h4 className="font-medium text-gray-900 mb-3">Medical Information</h4>
-              <div className="grid grid-cols-2 gap-4">
+              <h4 className="font-medium text-gray-900 mb-3">Additional Information</h4>
+              <div className="grid grid-cols-3 gap-4">
                 <input
-                  type="text"
-                  placeholder="Medical Record Number"
-                  value={formData.medical_record_number}
-                  onChange={(e) => setFormData({...formData, medical_record_number: e.target.value})}
+                  type="number"
+                  placeholder="County ID"
+                  value={formData.fkcounty || ''}
+                  onChange={(e) => setFormData({...formData, fkcounty: e.target.value})}
                   className="form-input"
                 />
                 <input
-                  type="text"
-                  placeholder="Insurance ID"
-                  value={formData.insurance_id}
-                  onChange={(e) => setFormData({...formData, insurance_id: e.target.value})}
+                  type="number"
+                  placeholder="Member Eligibility ID"
+                  value={formData.fkmembereligibilityid || ''}
+                  onChange={(e) => setFormData({...formData, fkmembereligibilityid: e.target.value})}
                   className="form-input"
+                />
+                <input
+                  type="number"
+                  placeholder="Preferred Language ID"
+                  value={formData.fkpreferredlanguageid || ''}
+                  onChange={(e) => setFormData({...formData, fkpreferredlanguageid: e.target.value})}
+                  className="form-input"
+                />
+              </div>
+              
+              <div className="mt-4">
+                <input
+                  type="text"
+                  placeholder="Service Categories"
+                  value={formData.servicecategories}
+                  onChange={(e) => setFormData({...formData, servicecategories: e.target.value})}
+                  className="form-input w-full"
                 />
               </div>
             </div>
 
             {/* Notes */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-3">Notes</h4>
+              <h4 className="font-medium text-gray-900 mb-3">Additional Data</h4>
               <textarea
-                placeholder="Additional notes..."
-                value={formData.notes}
-                onChange={(e) => setFormData({...formData, notes: e.target.value})}
+                placeholder="Additional data and notes..."
+                value={formData.additionaldata}
+                onChange={(e) => setFormData({...formData, additionaldata: e.target.value})}
                 className="form-input w-full"
                 rows="3"
               />
@@ -325,20 +483,21 @@ const PatientManagement = () => {
             
             <div className="flex justify-end space-x-2 pt-4">
               <button
+                type="button"
                 onClick={onClose}
                 className="px-4 py-2 text-gray-600 border rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handleSubmit}
+                type="submit"
                 disabled={saving}
                 className="btn-primary"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     );
@@ -350,6 +509,11 @@ const PatientManagement = () => {
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Patient Management</h2>
           <p className="text-gray-600">Manage patient records and medical information</p>
+          {totalCount > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              Total: {totalCount} patients
+            </p>
+          )}
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
@@ -380,7 +544,7 @@ const PatientManagement = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch(e)}
-                placeholder="Search by name, email, phone..."
+                placeholder="Search by name, email, phone, account number..."
                 className="w-full pl-10 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
@@ -435,7 +599,10 @@ const PatientManagement = () => {
                   Demographics
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Medical Info
+                  Account Info
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -445,18 +612,18 @@ const PatientManagement = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center">
+                  <td colSpan="7" className="px-6 py-4 text-center">
                     <LoadingSpinner />
                   </td>
                 </tr>
               ) : patients.length > 0 ? (
                 patients.map((patient) => (
-                  <tr key={patient.id}>
+                  <tr key={patient.pkpatientid || patient.id}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <input
                         type="checkbox"
-                        checked={selectedItems.includes(patient.id)}
-                        onChange={() => toggleSelectItem(patient.id)}
+                        checked={selectedItems.includes(patient.pkpatientid || patient.id)}
+                        onChange={() => toggleSelectItem(patient.pkpatientid || patient.id)}
                         className="rounded border-gray-300"
                       />
                     </td>
@@ -465,26 +632,32 @@ const PatientManagement = () => {
                         <User className="h-8 w-8 text-gray-400 bg-gray-100 rounded-full p-1" />
                         <div className="ml-3">
                           <div className="font-medium text-gray-900">
-                            {patient.firstname} {patient.lastname}
+                            {patient.firstname} {patient.middlename && patient.middlename + ' '}{patient.lastname}
                           </div>
                           <div className="text-sm text-gray-500">
-                            ID: {patient.id}
+                            ID: {patient.pkpatientid || patient.id}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="space-y-1">
-                        {patient.email && (
+                        {patient.emailaddress && (
                           <div className="flex items-center">
                             <Mail size={14} className="mr-1" />
-                            {patient.email}
+                            {patient.emailaddress}
                           </div>
                         )}
-                        {patient.phone && (
+                        {patient.primaryphone && (
                           <div className="flex items-center">
                             <Phone size={14} className="mr-1" />
-                            {formatPhoneNumber(patient.phone)}
+                            {formatPhoneNumber(patient.primaryphone)}
+                          </div>
+                        )}
+                        {patient.phonenumber && patient.phonenumber !== patient.primaryphone && (
+                          <div className="flex items-center">
+                            <Phone size={14} className="mr-1" />
+                            {formatPhoneNumber(patient.phonenumber)}
                           </div>
                         )}
                       </div>
@@ -492,23 +665,47 @@ const PatientManagement = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="space-y-1">
                         {patient.gender && (
-                          <div>Gender: {patient.gender}</div>
+                          <div>Gender: {patient.gender.toUpperCase()}</div>
                         )}
-                        {patient.dateofbirth && (
+                        {patient.dob && (
                           <div className="flex items-center">
                             <Calendar size={14} className="mr-1" />
-                            {formatDate(patient.dateofbirth)}
+                            {formatDate(patient.dob)}
                           </div>
+                        )}
+                        {patient.city && patient.state && (
+                          <div>{patient.city}, {patient.state}</div>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="space-y-1">
-                        {patient.medical_record_number && (
-                          <div>MRN: {patient.medical_record_number}</div>
+                        {patient.accountnumber && (
+                          <div>Account: {patient.accountnumber}</div>
                         )}
-                        {patient.insurance_id && (
-                          <div>Insurance: {patient.insurance_id}</div>
+                        {patient.payorinformation && (
+                          <div>Payor: {patient.payorinformation}</div>
+                        )}
+                        {patient.servicecategories && (
+                          <div>Services: {patient.servicecategories}</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <div className="space-y-1">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          patient.active 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {patient.active ? 'Active' : 'Inactive'}
+                        </span>
+                        {patient.caregiver && (
+                          <div>
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                              Caregiver
+                            </span>
+                          </div>
                         )}
                       </div>
                     </td>
@@ -521,7 +718,7 @@ const PatientManagement = () => {
                           <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => handleBulkDelete([patient.id])}
+                          onClick={() => handleBulkDelete([patient.pkpatientid || patient.id])}
                           className="text-red-600 hover:text-red-900"
                         >
                           <Trash2 size={16} />
@@ -532,7 +729,7 @@ const PatientManagement = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
+                  <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
                     No patients found
                   </td>
                 </tr>
@@ -549,20 +746,23 @@ const PatientManagement = () => {
                 <p className="text-sm text-gray-700">
                   Page <span className="font-medium">{currentPage}</span> of{' '}
                   <span className="font-medium">{totalPages}</span>
+                  {totalCount > 0 && (
+                    <span> ({totalCount} total patients)</span>
+                  )}
                 </p>
               </div>
               <div>
                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                   <button
                     onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
+                    disabled={currentPage === 1 || !previousPage}
                     className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Previous
                   </button>
                   <button
                     onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === totalPages || !nextPage}
                     className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                   >
                     Next
