@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { AuthProvider, useAuth } from './components/auth/AuthProvider';
 import LoginForm from './components/auth/LoginForm';
 import Navigation from './components/layout/Navigation';
+import ClientManagement from './components/pages/ClientManagement';
 import './index.css';
 
 // Placeholder components for different views
@@ -32,7 +33,7 @@ const AppContent = () => {
       case 'patients':
         return <PlaceholderView title="Patient Management" description="Manage patient records and information" />;
       case 'clients':
-        return <PlaceholderView title="Client Management" description="Manage healthcare clients and organizations" />;
+        return <ClientManagement />;
       case 'providers':
         return <PlaceholderView title="Provider Management" description="Manage healthcare providers and networks" />;
       case 'referrals':
