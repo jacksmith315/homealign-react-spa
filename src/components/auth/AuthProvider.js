@@ -14,7 +14,7 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('access_token'));
   const [user, setUser] = useState(null);
-  const [selectedDb, setSelectedDb] = useState(localStorage.getItem('selected_db') || 'core');
+  const [selectedDb, setSelectedDb] = useState(localStorage.getItem('selected_db') || 'humana');
 
   const login = async (email, password) => {
     try {

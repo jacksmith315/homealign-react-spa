@@ -40,7 +40,7 @@ const Navigation = ({ currentView, setCurrentView, sidebarOpen, setSidebarOpen }
         <div className="flex flex-col h-full">
           <div className="p-6 border-b">
             <h1 className="text-xl font-bold text-gray-800">homeAlign</h1>
-            <p className="text-sm text-gray-600">Admin Portal</p>
+            <p className="text-sm text-gray-600">Custom Portal</p>
           </div>
 
           {/* Database Selector */}
@@ -50,7 +50,7 @@ const Navigation = ({ currentView, setCurrentView, sidebarOpen, setSidebarOpen }
                 onClick={() => setDbDropdownOpen(!dbDropdownOpen)}
                 className="w-full flex items-center justify-between px-3 py-2 text-sm border rounded-md bg-gray-50 hover:bg-gray-100"
               >
-                <span>DB: {DATABASES.find(db => db.id === selectedDb)?.name}</span>
+                <span>Tenant: {DATABASES.find(db => db.id === selectedDb)?.name}</span>
                 <ChevronDown size={16} />
               </button>
               {dbDropdownOpen && (

@@ -397,7 +397,7 @@ export default ApiService;
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#2563eb" />
-    <meta name="description" content="homeAlign Admin Portal - Healthcare Management System" />
+    <meta name="description" content="homeAlign Custom Portal - Healthcare Management System" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
